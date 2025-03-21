@@ -5,6 +5,23 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class Routes(val route: String) {
+
+    @Serializable
+    object Splash: Routes(
+        route = Splash::class.qualifiedName.toString()
+    )
+
+    @Serializable
+    object LoginSignup : Routes(
+        route = LoginSignup::class.qualifiedName.toString()
+    )
+
+
+    @Serializable
+    object ForgotPassword : Routes(
+        route = ForgotPassword::class.qualifiedName.toString()
+    )
+
     @Serializable
     object Home : Routes(
         route = Home::class.qualifiedName.toString()

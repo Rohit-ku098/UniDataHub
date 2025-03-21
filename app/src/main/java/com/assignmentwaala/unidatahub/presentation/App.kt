@@ -1,21 +1,16 @@
 package com.assignmentwaala.unidatahub.presentation
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -24,20 +19,24 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -46,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.assignmentwaala.unidatahub.MainActivity.Companion.TAG
 import com.assignmentwaala.unidatahub.R
+import com.assignmentwaala.unidatahub.common.AuthStatus
 import com.assignmentwaala.unidatahub.domain.models.DocumentModel
 import com.assignmentwaala.unidatahub.presentation.screens.AddProductScreen
 import com.assignmentwaala.unidatahub.presentation.screens.CommunityScreen
@@ -53,27 +53,82 @@ import com.assignmentwaala.unidatahub.presentation.screens.DocumentListScreen
 import com.assignmentwaala.unidatahub.presentation.screens.HomeScreen
 import com.assignmentwaala.unidatahub.presentation.screens.ProfileScreen
 import com.assignmentwaala.unidatahub.presentation.components.BottomNavBar
+import com.assignmentwaala.unidatahub.presentation.components.ModalCard
+import com.assignmentwaala.unidatahub.presentation.components.SignInModal
 import com.assignmentwaala.unidatahub.presentation.screens.DocumentDetailsScreen
+import com.assignmentwaala.unidatahub.presentation.screens.LoginSignupScreen
+import com.assignmentwaala.unidatahub.presentation.screens.SplashScreen
+import com.assignmentwaala.unidatahub.presentation.viewmodel.AuthViewModel
+import com.assignmentwaala.unidatahub.presentation.viewmodel.CategoryViewModel
 import com.assignmentwaala.unidatahub.presentation.viewmodel.DocumentViewModel
+import com.assignmentwaala.unidatahub.presentation.viewmodel.PreferenceViewModal
 import com.assignmentwaala.unidatahub.ui.theme.primaryBlue
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.reflect.typeOf
 
 @Composable
 fun App() {
+
     val navController = rememberNavController()
-    val viewModel: DocumentViewModel = hiltViewModel()
-    var showBottomBar by remember { mutableStateOf(true) }
-//    var showTopBar by remember { mutableStateOf(true) }
+    val documentViewModel: DocumentViewModel = hiltViewModel()
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val categoryViewModel: CategoryViewModel = hiltViewModel()
+    val preferenceViewModel: PreferenceViewModal = hiltViewModel()
+
+    val authStatus by authViewModel.authStatus.collectAsState()
+    var isAuthenticated by rememberSaveable { mutableStateOf(false) }
+
+    var showBottomBar by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination?.route
+
+    // Splash
+    var isAppReady by rememberSaveable { mutableStateOf(false) }
+
+    val isGuestLogin by preferenceViewModel.isGuestLogin.collectAsState()
+    var initialCall by rememberSaveable { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        if(initialCall) {
+            Log.d(TAG, "Auth status getCurrentUser called")
+            authViewModel.getCurrentUser()
+            categoryViewModel.getCategories()
+
+            initialCall = false
+        }
+    }
+
+
+    LaunchedEffect(authStatus) {
+        Log.d(TAG, "authStatus.value:- ${authStatus}")
+        when(authStatus) {
+            is AuthStatus.Authenticated -> {
+                isAuthenticated = true
+                isAppReady = true
+                showDialog = false
+            }
+
+            is AuthStatus.Unauthenticated -> {
+                isAuthenticated = false
+                isAppReady = true
+            }
+            else -> {
+                isAuthenticated = false
+            }
+        }
+    }
+
     Log.d(TAG, "App called")
     LaunchedEffect(currentDestination) {
-        Log.d(TAG, "Routes.DocumentDetails route:- ${Routes.DocumentDetails().route}\ncurrentDestination:- $currentDestination")
         when(currentDestination) {
             Routes.AddDocument.route,
             Routes.DocumentList().route,
-            Routes.DocumentDetails().route -> {
+            Routes.DocumentDetails().route,
+            Routes.LoginSignup.route,
+            Routes.Splash.route-> {
                 showBottomBar = false
             }
             else -> {
@@ -82,191 +137,153 @@ fun App() {
             }
         }
     }
-    Scaffold(
-        modifier = Modifier.background(primaryBlue).statusBarsPadding(),
-        bottomBar = {
-            AnimatedVisibility(
-                visible = showBottomBar,
-                enter = slideInVertically(initialOffsetY = { it }),
-                exit = slideOutVertically(targetOffsetY = { it }),
-            ) {
-                BottomNavBar(navController)
-            }
-//            if(showBottomBar) {
-//                BottomNavBar(navController)
-//            }
 
-        }
-    ) { innerPadding->
-        Surface(
+
+    if(!isAppReady) {
+        SplashScreen {  }
+    } else {
+        Scaffold(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            color = MaterialTheme.colorScheme.background
-        ){
-            NavHost(
-                navController = navController,
-                startDestination = Routes.Home,
-            ) {
-                composable<Routes.Home> {
-                    HomeScreen(
-                        onItemClick = {
-                            navController.navigate(Routes.DocumentList(it))
-                        },
-
-                        onAddProductClick = {
-                            navController.navigate(Routes.AddDocument)
-                        },
-                    )
-                    Log.d(TAG, "HomeComposable NavHost called")
-
+                .background(primaryBlue)
+                .statusBarsPadding(),
+            bottomBar = {
+                if(showBottomBar) {
+                    BottomNavBar(navController)
                 }
 
-                composable<Routes.Community> {
-                    CommunityScreen()
-                    Log.d(TAG, "CommunityComposable NavHost called")
-
-                }
-
-                composable<Routes.Profile> {
-                    ProfileScreen()
-                    Log.d(TAG, "ProfileComposable NavHost called")
-                }
-
-                composable<Routes.AddDocument> {
-                    AddProductScreen {
-                        navController.popBackStack()
-                        navController.navigate(Routes.Home)
+            }
+        ) { innerPadding->
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                color = MaterialTheme.colorScheme.background
+            ){
+                NavHost(
+                    navController = navController,
+                    startDestination = if(isGuestLogin || isAuthenticated) Routes.Home.route else Routes.LoginSignup.route,
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None }
+                ) {
+                    composable<Routes.Home> {
+                        HomeScreen(
+                            categoryViewModel = categoryViewModel,
+                            onItemClick = {
+                                navController.navigate(Routes.DocumentList(it))
+                            },
+                            onAddProductClick = {
+                                if(!isAuthenticated) {
+                                    showDialog = true
+                                }
+                                else {
+                                    navController.navigate(Routes.AddDocument)
+                                }
+                            },
+                        )
+                        Log.d(TAG, "HomeComposable NavHost called")
+                        if(showDialog) {
+                            SignInModal(
+                                message = "You are not signed in. Sign in to upload documents.",
+                                onDismiss = { showDialog = false },
+                                onSignInClick = {
+                                    navController.navigate(Routes.LoginSignup)
+                                }
+                            )
+                        }
                     }
-                    Log.d(TAG, "AddDocumentComposable NavHost called")
 
-                }
+                    composable<Routes.LoginSignup> {
+                        LoginSignupScreen(
+                            authViewModel = authViewModel,
+                            onLoginSuccess = {
+                                navController.popBackStack()
+                                navController.navigate(Routes.Home)
+                            },
+                            continueAsGuest = {
+                                navController.popBackStack()
+                                navController.navigate(Routes.Home)
+                                preferenceViewModel.setIsGuestLogin(true)
+                            }
+                        )
+                    }
 
-                composable<Routes.DocumentList> {
-                    val data = it.toRoute<Routes.DocumentList>()
-                    DocumentListScreen(
-                        category = data.category,
-                        onClickItem = {document ->
-                            navController.navigate(Routes.DocumentDetails(
-                                title = document.title,
-                                description = document.description,
-                                url = document.url,
-                                category = document.category,
-                                author = document.author,
-                                uploadBy = document.uploadBy,
-                                date = document.date
-                            ))
+                    composable<Routes.Community> {
+                        CommunityScreen()
+                        Log.d(TAG, "CommunityComposable NavHost called")
 
-                        },
-                        onBack = {
+                    }
+
+                    composable<Routes.Profile> {
+                        ProfileScreen(
+                            authViewModel = authViewModel,
+                            onLoginClick = {
+                                navController.navigate(Routes.LoginSignup)
+                            },
+                            onLogout = {
+                                authViewModel.logout()
+                                navController.popBackStack()
+                                navController.navigate(Routes.LoginSignup)
+                                preferenceViewModel.setIsGuestLogin(false)
+                            },
+                            onViewDocuments = {
+
+                            },
+                            onChangePassword = {
+
+                            }
+                        )
+                        Log.d(TAG, "ProfileComposable NavHost called")
+                    }
+
+                    composable<Routes.AddDocument> {
+                        Log.d(TAG, "AddDocumentComposable NavHost called")
+                        AddProductScreen(
+                            documentViewModel = documentViewModel,
+                        ) {
+                            navController.popBackStack()
+                            navController.navigate(Routes.Home)
+                        }
+
+
+                    }
+
+                    composable<Routes.DocumentList> {
+                        val data = it.toRoute<Routes.DocumentList>()
+                        DocumentListScreen(
+                            category = data.category,
+                            onClickItem = {document ->
+                                navController.navigate(Routes.DocumentDetails(
+                                    title = document.title,
+                                    description = document.description,
+                                    url = document.url,
+                                    category = document.category,
+                                    author = document.author,
+                                    uploadBy = document.uploadBy,
+                                    date = document.date
+                                ))
+
+                            },
+                            onBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                        Log.d(TAG, "DocumentListComposable NavHost called")
+
+                    }
+
+                    composable<Routes.DocumentDetails> {
+                        val data = it.toRoute<Routes.DocumentDetails>()
+                        DocumentDetailsScreen(data) {
                             navController.popBackStack()
                         }
-                    )
-                    Log.d(TAG, "DocumentListComposable NavHost called")
+                        Log.d(TAG, "DocumentDetailsComposable NavHost called")
 
-                }
-
-                composable<Routes.DocumentDetails> {
-                    val data = it.toRoute<Routes.DocumentDetails>()
-                    DocumentDetailsScreen(data) {
-                        navController.popBackStack()
                     }
-                    Log.d(TAG, "DocumentDetailsComposable NavHost called")
-
                 }
             }
         }
     }
+
 }
-//
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun TopBar(viewModel: DocumentViewModel, navController: NavHostController) {
-//
-//    val navBackStackEntry by navController.currentBackStackEntryAsState()
-//    val currentDestination = navBackStackEntry?.destination?.route
-//    var headingText by rememberSaveable { mutableStateOf("UniDataHub") }
-//
-//    LaunchedEffect(currentDestination) {
-//        headingText = when (currentDestination) {
-//            Routes.AddDocument::class.qualifiedName -> {
-//                "Add Document"
-//            }
-//
-//            Routes.DocumentList::class.qualifiedName.toString() + "/{category}" -> {
-//                navBackStackEntry?.toRoute<Routes.DocumentList>()?.category ?: "UniDataHub"
-//            }
-//
-//            else -> {
-//                "UniDataHub"
-//            }
-//        }
-//    }
-//
-//    TopAppBar(
-//        title = {
-//            Log.d(TAG, "TopBar: currentDestination")
-//
-//            Text(
-//                text = headingText,
-//                fontWeight = FontWeight.Bold,
-//                fontSize = 22.sp,
-//                color = Color.White
-//            )
-//
-//        },
-//
-//        navigationIcon = {
-//            when (navController.currentDestination?.route) {
-//                Routes.AddDocument::class.qualifiedName -> {
-//                    IconButton(onClick = { navController.popBackStack() }) {
-//                        Icon(
-//                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-//                            contentDescription = "Back",
-//                            modifier = Modifier.size(28.dp),
-//                            tint = Color.White
-//                        )
-//                    }
-//                    Log.d(
-//                        TAG,
-//                        "Add Document Screen: qualifiedName: ${Routes.AddDocument::class.qualifiedName}"
-//                    )
-//                }
-//
-//                Routes.DocumentList::class.qualifiedName.toString() + "/{category}" -> {
-//                    IconButton(onClick = { navController.popBackStack() }) {
-//                        Icon(
-//                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-//                            contentDescription = "Back",
-//                            modifier = Modifier.size(28.dp),
-//                            tint = Color.White
-//                        )
-//                    }
-//                }
-//
-//            }
-//        },
-//
-//        actions = {
-//            when (navController.currentDestination?.route) {
-//                Routes.AddDocument::class.qualifiedName -> {}
-//                else -> {
-//                    IconButton(onClick = { navController.navigate(Routes.AddDocument) }) {
-//                        Icon(
-//                            imageVector = ImageVector.vectorResource(R.drawable.ic_upload_arrow),
-//                            contentDescription = "Upload document",
-//                            modifier = Modifier.size(38.dp).padding(4.dp),
-//                            tint = Color.White
-//                        )
-//                    }
-//                }
-//            }
-//        },
-//
-//        colors = TopAppBarDefaults.topAppBarColors(
-//            containerColor = Color(0xFF3D5AF1),
-//            titleContentColor = Color.White,
-//            actionIconContentColor = Color.White
-//        )
-//    )
-//}
+
+

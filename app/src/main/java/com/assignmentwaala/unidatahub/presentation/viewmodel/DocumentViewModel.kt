@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.assignmentwaala.unidatahub.MainActivity.Companion.TAG
 import com.assignmentwaala.unidatahub.common.ResultState
 import com.assignmentwaala.unidatahub.domain.models.DocumentModel
-import com.assignmentwaala.unidatahub.domain.repository.DocumentRepository
+import com.assignmentwaala.unidatahub.domain.repository.Repository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class DocumentViewModel @Inject constructor(private val repository: DocumentRepository) : ViewModel() {
+class DocumentViewModel @Inject constructor(private val repository: Repository) : ViewModel() {
     val _uploadState = MutableStateFlow<ResultState<DocumentModel>>(ResultState.Idle)
     val uploadState = _uploadState.asStateFlow()
 

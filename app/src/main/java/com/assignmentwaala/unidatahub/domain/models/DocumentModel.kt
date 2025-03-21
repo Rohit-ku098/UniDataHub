@@ -13,6 +13,7 @@ data class DocumentModel(
     val category: String = "",
     val author: String = "",
     val uploadBy: String = "",
+    val ownerId: String = "",
 //    val thumbnail: String? = null,
     val date: String = ""
 ) : Parcelable

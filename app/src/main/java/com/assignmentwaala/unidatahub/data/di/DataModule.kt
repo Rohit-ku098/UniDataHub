@@ -6,6 +6,7 @@ import com.assignmentwaala.unidatahub.common.CLOUDINARY_API_SECRET
 import com.assignmentwaala.unidatahub.common.CLOUDINARY_NAME
 import com.cloudinary.Cloudinary
 import com.cloudinary.android.MediaManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
@@ -23,5 +24,9 @@ class DataModule {
         return FirebaseFirestore.getInstance()
     }
 
-
+    @Singleton
+    @Provides
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
+    }
 }

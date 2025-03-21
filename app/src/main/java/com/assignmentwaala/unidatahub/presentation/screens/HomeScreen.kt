@@ -42,10 +42,10 @@ import com.assignmentwaala.unidatahub.presentation.viewmodel.CategoryViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    categoryViewModel: CategoryViewModel,
     onItemClick: (String) -> Unit,
     onAddProductClick: () -> Unit
 ) {
-    val categoryViewModel: CategoryViewModel = hiltViewModel()
     val context = LocalContext.current
     val categories by categoryViewModel.categories.collectAsState()
 
@@ -76,7 +76,9 @@ fun HomeScreen(
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.ic_upload_arrow),
                             contentDescription = "Upload document",
-                            modifier = Modifier.size(38.dp).padding(4.dp),
+                            modifier = Modifier
+                                .size(38.dp)
+                                .padding(4.dp),
                             tint = Color.White
                         )
                     }

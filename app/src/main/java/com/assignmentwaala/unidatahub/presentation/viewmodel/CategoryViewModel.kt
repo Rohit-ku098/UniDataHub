@@ -8,8 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.assignmentwaala.unidatahub.MainActivity.Companion.TAG
 import com.assignmentwaala.unidatahub.R
 import com.assignmentwaala.unidatahub.common.ResultState
-import com.assignmentwaala.unidatahub.domain.models.CategoryModel
-import com.assignmentwaala.unidatahub.domain.repository.DocumentRepository
+import com.assignmentwaala.unidatahub.domain.repository.Repository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class CategoryViewModel @Inject constructor(private val repository: DocumentRepository): ViewModel() {
+class CategoryViewModel @Inject constructor(private val repository: Repository): ViewModel() {
 
     private val _categories = MutableStateFlow<List<CategoryData>>(listOf(
         CategoryData("Research Paper", 0, Color(0xFF4A78FA), Color(0xFF3F5DFF), R.drawable.ic_research),

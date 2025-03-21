@@ -79,6 +79,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.firebase.firestore)
+    implementation(libs.androidx.espresso.core)
+    implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -87,6 +89,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    // Splash Screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // this ia for hilt dependency injection
     implementation("com.google.dagger:hilt-android:2.51.1")
@@ -110,7 +114,8 @@ dependencies {
     // Cloudinary
     implementation("com.cloudinary:cloudinary-android:3.0.2")
 
-
+    // Datastore
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    //this is for pager
 //    implementation("com.google.accompanist:accompanist-pager:0.28.0")
 //    implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")

@@ -54,21 +54,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.assignmentwaala.unidatahub.R
+import com.assignmentwaala.unidatahub.common.AuthStatus
 import com.assignmentwaala.unidatahub.common.CATEGORY_LIST
 import com.assignmentwaala.unidatahub.common.ResultState
 import com.assignmentwaala.unidatahub.domain.models.DocumentModel
 import com.assignmentwaala.unidatahub.presentation.components.CustomTextField
 import com.assignmentwaala.unidatahub.presentation.components.DropdownTextField
+import com.assignmentwaala.unidatahub.presentation.components.ModalCard
 import com.assignmentwaala.unidatahub.presentation.components.PDFPicker
+import com.assignmentwaala.unidatahub.presentation.viewmodel.AuthViewModel
 import com.assignmentwaala.unidatahub.presentation.viewmodel.DocumentViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddProductScreen(onBack: () -> Unit) {
+fun AddProductScreen(
+    documentViewModel: DocumentViewModel,
+    onBack: () -> Unit
+) {
     val context = LocalContext.current
-    val documentViewModel: DocumentViewModel = hiltViewModel()
     val uploadState by documentViewModel.uploadState.collectAsState()
     var loading by rememberSaveable { mutableStateOf(false) }
     var uploadProgress by rememberSaveable { mutableStateOf(0) }
@@ -81,6 +86,35 @@ fun AddProductScreen(onBack: () -> Unit) {
     var submitButtonEnable by rememberSaveable { mutableStateOf(true) }
 
     val scrollState = rememberScrollState()
+
+
+    // Loading indicator overlay
+    LaunchedEffect(uploadState) {
+        when (uploadState) {
+            is ResultState.Loading -> {
+                loading = true
+            }
+
+            is ResultState.Uploading -> {
+                loading = true
+                var bytes = (uploadState as ResultState.Uploading).bytes
+                var total = (uploadState as ResultState.Uploading).totalBytes
+                uploadProgress = Math.ceil(((bytes.toFloat() / total) * 100).toDouble()).toInt()
+
+            }
+            is ResultState.Success -> {
+                loading = false
+                Toast.makeText(context, "Document uploaded successfully", Toast.LENGTH_SHORT).show()
+                submitButtonEnable=true
+                onBack()
+            }
+            else -> {
+                loading = false
+                submitButtonEnable=true
+            }
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -226,32 +260,7 @@ fun AddProductScreen(onBack: () -> Unit) {
                 }
             }
 
-            // Loading indicator overlay
-            LaunchedEffect(uploadState) {
-                when (uploadState) {
-                    is ResultState.Loading -> {
 
-                    }
-
-                    is ResultState.Uploading -> {
-                        loading = true
-                        var bytes = (uploadState as ResultState.Uploading).bytes
-                        var total = (uploadState as ResultState.Uploading).totalBytes
-                        uploadProgress = Math.ceil(((bytes.toFloat() / total) * 100).toDouble()).toInt()
-
-                    }
-                    is ResultState.Success -> {
-                        loading = false
-                        Toast.makeText(context, "Document uploaded successfully", Toast.LENGTH_SHORT).show()
-                        submitButtonEnable=true
-                        onBack()
-                    }
-                    else -> {
-                        loading = false
-                        submitButtonEnable=true
-                    }
-                }
-            }
 
             if(loading) {
                 Box(
@@ -286,6 +295,8 @@ fun AddProductScreen(onBack: () -> Unit) {
                 }
 
             }
+
+
 
         }
     }

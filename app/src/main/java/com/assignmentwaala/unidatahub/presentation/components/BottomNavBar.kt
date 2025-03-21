@@ -78,6 +78,7 @@ fun BottomNavBar(navController: NavHostController) {
             NavigationBarItem(
                 selected = index == bottomNavSelectedItem,
                 onClick = {
+                    if(bottomNavSelectedItem == index) return@NavigationBarItem
                     navController.navigate(item.route) {
                         popUpTo(navController.graph.startDestinationId) {
                             saveState = true
