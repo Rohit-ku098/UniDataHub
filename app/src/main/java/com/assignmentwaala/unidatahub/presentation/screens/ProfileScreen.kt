@@ -1,6 +1,7 @@
 package com.assignmentwaala.unidatahub.presentation.screens
 
 import android.provider.ContactsContract.Profile
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,24 +41,31 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.assignmentwaala.unidatahub.common.AuthStatus
+import com.assignmentwaala.unidatahub.common.ResultState
+import com.assignmentwaala.unidatahub.presentation.components.PasswordResetModal
 import com.assignmentwaala.unidatahub.presentation.viewmodel.AuthViewModel
 import com.assignmentwaala.unidatahub.ui.theme.primaryBlue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 //@Preview(showBackground = true)
@@ -66,8 +74,7 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,
     onLoginClick: () -> Unit,
     onLogout: () -> Unit,
-    onViewDocuments: () -> Unit,
-    onChangePassword: () -> Unit
+    onViewDocuments: () -> Unit
 ) {
 
     val authStatus by authViewModel.authStatus.collectAsState()
@@ -75,6 +82,10 @@ fun ProfileScreen(
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("") }
+
+    var changePasswordDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         when(authStatus) {
@@ -84,6 +95,30 @@ fun ProfileScreen(
                 role = (authStatus as AuthStatus.Authenticated).user.role
             }
             else -> {
+
+            }
+        }
+    }
+
+    fun handlePasswordChange(currentPassword: String,newPassword: String) {
+        scope.launch {
+            authViewModel.changePassword(currentPassword, newPassword).collect {
+               when(it) {
+                   is ResultState.Success -> {
+                       Toast.makeText(context, "Password reset successfully", Toast.LENGTH_SHORT).show()
+                       changePasswordDialog = false
+                   }
+                   is ResultState.Loading -> {
+
+                   }
+                   is ResultState.Error -> {
+                       Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                       changePasswordDialog = false
+                   }
+                   else -> {
+
+                   }
+               }
 
             }
         }
@@ -111,77 +146,88 @@ fun ProfileScreen(
     ) { paddingValues ->
         if(isAuthenticated) {
 
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Profile Picture
-                Surface(
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                Column(
                     modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile Picture",
+                    // Profile Picture
+                    Surface(
                         modifier = Modifier
-                            .padding(24.dp)
-                            .size(72.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                            .size(120.dp)
+                            .clip(CircleShape),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier
+                                .padding(24.dp)
+                                .size(72.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // User Info Section
+                    UserInfoSection(username, email, role)
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    TextButton(
+                        onClick = onViewDocuments,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("View My Documents", fontSize = 16.sp)
+                    }
+
+                    HorizontalDivider()
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { changePasswordDialog = !changePasswordDialog }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = "Change Password")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Change Password", fontSize = 16.sp)
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onLogout() }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Logout", fontSize = 16.sp, color = Color.Red)
+                        }
+                    }
+                }
+
+                if(changePasswordDialog) {
+                    PasswordResetModal(
+                        showDialog = changePasswordDialog,
+                        onDismiss = {
+                            changePasswordDialog = false
+                        },
+                        onPasswordReset = ::handlePasswordChange
                     )
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // User Info Section
-                UserInfoSection(username, email, role)
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                TextButton(
-                    onClick = onViewDocuments,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("View All Documents", fontSize = 16.sp)
-                }
-
-                HorizontalDivider()
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onChangePassword() }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Lock, contentDescription = "Change Password")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Change Password", fontSize = 16.sp)
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onLogout() }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Logout", fontSize = 16.sp, color = Color.Red)
-                    }
-                }
             }
+
         }
         else {
             Box(

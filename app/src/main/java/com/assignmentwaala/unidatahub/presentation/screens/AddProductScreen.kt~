@@ -127,7 +127,7 @@ fun AddProductScreen(
                 url = documentUri.toString(),
                 date = SimpleDateFormat("dd/MM/yyyy HH:mm").format(System.currentTimeMillis()),
                 author = author,
-                uploadBy = currentUser?.name ?: "",
+                uploadBy = currentUser?.name ?: "UniDataHub",
                 ownerId = currentUser?.uid ?: ""
             )
             submitButtonEnable = false

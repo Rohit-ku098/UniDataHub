@@ -236,10 +236,7 @@ fun App() {
                             preferenceViewModel.setIsGuestLogin(false)
                         },
                         onViewDocuments = {
-
-                        },
-                        onChangePassword = {
-
+                            navController.navigate(Routes.DocumentList(authViewModel.currentUser.value!!.uid))
                         }
                     )
                     Log.d(TAG, "ProfileComposable NavHost called")
@@ -247,7 +244,9 @@ fun App() {
 
                 composable<Routes.AddDocument> {
                     Log.d(TAG, "AddDocumentComposable NavHost called")
-                    AddProductScreen() {
+                    AddProductScreen(
+                        authViewModel = authViewModel
+                    ) {
                         navController.popBackStack()
                         navController.navigate(Routes.Home)
                     }

@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.assignmentwaala.unidatahub.common.CATEGORY_LIST
 import com.assignmentwaala.unidatahub.common.ResultState
 import com.assignmentwaala.unidatahub.domain.models.DocumentModel
 import com.assignmentwaala.unidatahub.presentation.components.DocumentItem
@@ -68,8 +69,14 @@ fun DocumentListScreen(
     var loading by remember { mutableStateOf(false) }
 
     LaunchedEffect(category) {
-        // Fetch documents for the selected category
-        viewModel.getDocuments(category)
+        if(CATEGORY_LIST.contains(category)) {
+            viewModel.getDocuments(category)
+        }
+        else {
+            // Fetch documents for the selected category
+            viewModel.getUserDocuments(category)
+        }
+
     }
 
     LaunchedEffect(documentsState) {
@@ -93,7 +100,7 @@ fun DocumentListScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = category,
+                        text = if(CATEGORY_LIST.contains(category)) category else "My Documents",
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp,
                         color = Color.White

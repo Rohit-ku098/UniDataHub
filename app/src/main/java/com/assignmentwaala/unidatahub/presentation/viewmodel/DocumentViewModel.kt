@@ -43,5 +43,14 @@ class DocumentViewModel @Inject constructor(private val repository: Repository) 
         }
     }
 
+    fun getUserDocuments(userId: String) {
+        viewModelScope.launch {
+            repository.getUserDocuments(userId).collect {
+                Log.d(TAG, "ViewMode result: $it")
+                _documents.value = it
+            }
+        }
+    }
+
 
 }

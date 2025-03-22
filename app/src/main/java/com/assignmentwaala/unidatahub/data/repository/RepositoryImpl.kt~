@@ -17,7 +17,6 @@ import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.cloudinary.utils.ObjectUtils
 import com.google.firebase.auth.EmailAuthCredential
-import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
@@ -309,21 +308,15 @@ class RepositoryImpl @Inject constructor(
             trySend(ResultState.Loading)
             val currentUser = firebaseAuth.currentUser
             if(currentUser != null) {
-                val credentials = EmailAuthProvider.getCredential(currentUser.email!!, currentPassword)
-                currentUser.reauthenticate(credentials)
+                val credentials = EmailAuthCredential(currentUser.email!!, currentPassword)
+                currentUser.reauthenticate(currentUser.email!!, currentPassword)
+                currentUser.updatePassword(newPassword)
                     .addOnSuccessListener {
-                        currentUser.updatePassword(newPassword)
-                            .addOnSuccessListener {
-                                trySend(ResultState.Success(true))
-                            }
-                            .addOnFailureListener {
-                                Log.d(TAG, "ChangePassword Repository Error: ${it.message}")
-                                trySend(ResultState.Error(it.message.toString()))
-                            }
+                        trySend(ResultState.Success(true))
                     }
                     .addOnFailureListener {
+                        Log.d(TAG, it.message.toString())
                         trySend(ResultState.Error(it.message.toString()))
-                        Log.d(TAG, "ChangePassword Repository Error: ${it.message}")
                     }
             }
             else {

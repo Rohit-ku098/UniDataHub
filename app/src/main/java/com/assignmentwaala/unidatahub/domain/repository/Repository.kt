@@ -17,4 +17,5 @@ interface Repository {
     fun signup(username: String, email: String, password: String, role: String): Flow<AuthStatus<UserModel>>
     fun logout(): Flow<AuthStatus<UserModel>>
     fun getCurrentUser(): Flow<AuthStatus<UserModel>>
+    fun changePassword(currentPassword: String, newPassword: String): Flow<ResultState<Boolean>>
 }
