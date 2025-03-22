@@ -70,10 +70,10 @@ import java.text.SimpleDateFormat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
-    documentViewModel: DocumentViewModel,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val documentViewModel: DocumentViewModel = hiltViewModel()
     val uploadState by documentViewModel.uploadState.collectAsState()
     var loading by rememberSaveable { mutableStateOf(false) }
     var uploadProgress by rememberSaveable { mutableStateOf(0) }

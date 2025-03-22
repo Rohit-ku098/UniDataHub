@@ -131,7 +131,9 @@ fun App() {
             Routes.Splash.route-> {
                 showBottomBar = false
             }
-            else -> {
+            Routes.Home.route,
+            Routes.Profile.route,
+            Routes.Community.route-> {
                 showBottomBar = true
 
             }
@@ -139,146 +141,151 @@ fun App() {
     }
 
 
-    if(!isAppReady) {
-        SplashScreen {  }
-    } else {
-        Scaffold(
-            modifier = Modifier
-                .background(primaryBlue)
-                .statusBarsPadding(),
-            bottomBar = {
-                if(showBottomBar) {
-                    BottomNavBar(navController)
-                }
-
+    Scaffold(
+        modifier = Modifier
+            .background(primaryBlue)
+            .statusBarsPadding(),
+        bottomBar = {
+            if(showBottomBar) {
+                Log.d(TAG, "Bottombar shown")
+                BottomNavBar(navController)
             }
-        ) { innerPadding->
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                color = MaterialTheme.colorScheme.background
-            ){
-                NavHost(
-                    navController = navController,
-                    startDestination = if(isGuestLogin || isAuthenticated) Routes.Home.route else Routes.LoginSignup.route,
-                    enterTransition = { EnterTransition.None },
-                    exitTransition = { ExitTransition.None }
-                ) {
-                    composable<Routes.Home> {
-                        HomeScreen(
-                            categoryViewModel = categoryViewModel,
-                            onItemClick = {
-                                navController.navigate(Routes.DocumentList(it))
-                            },
-                            onAddProductClick = {
-                                if(!isAuthenticated) {
-                                    showDialog = true
-                                }
-                                else {
-                                    navController.navigate(Routes.AddDocument)
-                                }
-                            },
-                        )
-                        Log.d(TAG, "HomeComposable NavHost called")
-                        if(showDialog) {
-                            SignInModal(
-                                message = "You are not signed in. Sign in to upload documents.",
-                                onDismiss = { showDialog = false },
-                                onSignInClick = {
-                                    navController.navigate(Routes.LoginSignup)
-                                }
-                            )
-                        }
-                    }
 
-                    composable<Routes.LoginSignup> {
-                        LoginSignupScreen(
-                            authViewModel = authViewModel,
-                            onLoginSuccess = {
-                                navController.popBackStack()
-                                navController.navigate(Routes.Home)
-                            },
-                            continueAsGuest = {
-                                navController.popBackStack()
-                                navController.navigate(Routes.Home)
-                                preferenceViewModel.setIsGuestLogin(true)
-                            }
-                        )
-                    }
-
-                    composable<Routes.Community> {
-                        CommunityScreen()
-                        Log.d(TAG, "CommunityComposable NavHost called")
-
-                    }
-
-                    composable<Routes.Profile> {
-                        ProfileScreen(
-                            authViewModel = authViewModel,
-                            onLoginClick = {
-                                navController.navigate(Routes.LoginSignup)
-                            },
-                            onLogout = {
-                                authViewModel.logout()
-                                navController.popBackStack()
-                                navController.navigate(Routes.LoginSignup)
-                                preferenceViewModel.setIsGuestLogin(false)
-                            },
-                            onViewDocuments = {
-
-                            },
-                            onChangePassword = {
-
-                            }
-                        )
-                        Log.d(TAG, "ProfileComposable NavHost called")
-                    }
-
-                    composable<Routes.AddDocument> {
-                        Log.d(TAG, "AddDocumentComposable NavHost called")
-                        AddProductScreen(
-                            documentViewModel = documentViewModel,
-                        ) {
-                            navController.popBackStack()
+        }
+    ) { innerPadding->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            color = MaterialTheme.colorScheme.background
+        ){
+            NavHost(
+                navController = navController,
+                startDestination = Routes.Splash,
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None }
+            ) {
+                composable<Routes.Splash> {
+                    SplashScreen {
+                        navController.popBackStack()
+                        if(isGuestLogin || isAuthenticated) {
                             navController.navigate(Routes.Home)
                         }
-
-
+                        else {
+                            navController.navigate(Routes.LoginSignup)
+                        }
                     }
-
-                    composable<Routes.DocumentList> {
-                        val data = it.toRoute<Routes.DocumentList>()
-                        DocumentListScreen(
-                            category = data.category,
-                            onClickItem = {document ->
-                                navController.navigate(Routes.DocumentDetails(
-                                    title = document.title,
-                                    description = document.description,
-                                    url = document.url,
-                                    category = document.category,
-                                    author = document.author,
-                                    uploadBy = document.uploadBy,
-                                    date = document.date
-                                ))
-
-                            },
-                            onBack = {
-                                navController.popBackStack()
+                }
+                composable<Routes.Home> {
+                    HomeScreen(
+                        categoryViewModel = categoryViewModel,
+                        onItemClick = {
+                            navController.navigate(Routes.DocumentList(it))
+                        },
+                        onAddProductClick = {
+                            if(!isAuthenticated) {
+                                showDialog = true
+                            }
+                            else {
+                                navController.navigate(Routes.AddDocument)
+                            }
+                        },
+                    )
+                    Log.d(TAG, "HomeComposable NavHost called")
+                    if(showDialog) {
+                        SignInModal(
+                            message = "You are not signed in. Sign in to upload documents.",
+                            onDismiss = { showDialog = false },
+                            onSignInClick = {
+                                navController.navigate(Routes.LoginSignup)
                             }
                         )
-                        Log.d(TAG, "DocumentListComposable NavHost called")
+                    }
+                }
 
+                composable<Routes.LoginSignup> {
+                    LoginSignupScreen(
+                        authViewModel = authViewModel,
+                        onLoginSuccess = {
+                            navController.popBackStack()
+                            navController.navigate(Routes.Home)
+                        },
+                        continueAsGuest = {
+                            navController.popBackStack()
+                            navController.navigate(Routes.Home)
+                            preferenceViewModel.setIsGuestLogin(true)
+                        }
+                    )
+                }
+
+                composable<Routes.Community> {
+                    CommunityScreen()
+                    Log.d(TAG, "CommunityComposable NavHost called")
+
+                }
+
+                composable<Routes.Profile> {
+                    ProfileScreen(
+                        authViewModel = authViewModel,
+                        onLoginClick = {
+                            navController.navigate(Routes.LoginSignup)
+                        },
+                        onLogout = {
+                            authViewModel.logout()
+                            navController.navigate(Routes.LoginSignup)
+                            preferenceViewModel.setIsGuestLogin(false)
+                        },
+                        onViewDocuments = {
+
+                        },
+                        onChangePassword = {
+
+                        }
+                    )
+                    Log.d(TAG, "ProfileComposable NavHost called")
+                }
+
+                composable<Routes.AddDocument> {
+                    Log.d(TAG, "AddDocumentComposable NavHost called")
+                    AddProductScreen() {
+                        navController.popBackStack()
+                        navController.navigate(Routes.Home)
                     }
 
-                    composable<Routes.DocumentDetails> {
-                        val data = it.toRoute<Routes.DocumentDetails>()
-                        DocumentDetailsScreen(data) {
+
+                }
+
+                composable<Routes.DocumentList> {
+                    val data = it.toRoute<Routes.DocumentList>()
+                    DocumentListScreen(
+                        category = data.category,
+                        onClickItem = {document ->
+                            navController.navigate(Routes.DocumentDetails(
+                                title = document.title,
+                                description = document.description,
+                                url = document.url,
+                                category = document.category,
+                                author = document.author,
+                                uploadBy = document.uploadBy,
+                                date = document.date
+                            ))
+
+                        },
+                        onBack = {
                             navController.popBackStack()
                         }
-                        Log.d(TAG, "DocumentDetailsComposable NavHost called")
+                    )
+                    Log.d(TAG, "DocumentListComposable NavHost called")
 
+                }
+
+                composable<Routes.DocumentDetails> {
+                    val data = it.toRoute<Routes.DocumentDetails>()
+                    DocumentDetailsScreen(data) {
+                        navController.popBackStack()
                     }
+                    Log.d(TAG, "DocumentDetailsComposable NavHost called")
+
                 }
             }
         }

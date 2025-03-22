@@ -80,7 +80,7 @@ fun BottomNavBar(navController: NavHostController) {
                 onClick = {
                     if(bottomNavSelectedItem == index) return@NavigationBarItem
                     navController.navigate(item.route) {
-                        popUpTo(navController.graph.startDestinationId) {
+                        popUpTo(Routes.Home.route) {
                             saveState = true
                         }
                         launchSingleTop = true
