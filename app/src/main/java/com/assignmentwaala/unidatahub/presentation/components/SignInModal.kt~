@@ -62,7 +62,7 @@ fun SignInModal(
 
                     Button(
                         onClick = onSignInClick,
-                        colors = ButtonDefaults.buttonColors(containerColor = primar),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryBlue),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(text = "Sign In")
@@ -71,104 +71,4 @@ fun SignInModal(
             }
         }
     }
-}
-
-@Composable
-fun ModalCard(
-    message: String,
-    onSignInClick: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f)) // Semi-transparent overlay
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(8.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 18.sp,
-                    ),
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedButton(
-                            onClick = onDismiss,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(text = "Cancel")
-                        }
-
-                        Button(
-                            onClick = onSignInClick,
-                            colors = ButtonDefaults.buttonColors(containerColor = primaryBlue),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(text = "Sign In")
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSignInModal() {
-    val context = LocalContext.current
-    var showDialog by remember { mutableStateOf(true) }
-
-    if (showDialog) {
-        SignInModal(
-            message = "You are not signed in. Sign in to upload documents.",
-            onDismiss = { showDialog = false },
-            onSignInClick = {
-                // Navigate to login screen
-                (context as? Activity)?.finish() // Replace with navigation logic
-            }
-        )
-    }
-
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSignInModalCard() {
-
-    ModalCard(
-        message = "You are not signed in. Sign in to upload documents.",
-        onDismiss = {},
-        onSignInClick = {}
-    )
-
 }

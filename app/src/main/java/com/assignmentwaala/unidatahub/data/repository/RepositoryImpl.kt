@@ -9,6 +9,7 @@ import com.assignmentwaala.unidatahub.MainActivity.Companion.TAG
 import com.assignmentwaala.unidatahub.common.AuthStatus
 import com.assignmentwaala.unidatahub.common.ResultState
 import com.assignmentwaala.unidatahub.domain.models.CategoryModel
+import com.assignmentwaala.unidatahub.domain.models.CommunityModel
 import com.assignmentwaala.unidatahub.domain.models.DocumentModel
 import com.assignmentwaala.unidatahub.domain.models.UserModel
 import com.assignmentwaala.unidatahub.domain.repository.Repository
@@ -20,6 +21,7 @@ import com.google.firebase.auth.EmailAuthCredential
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObjects
 import com.google.rpc.context.AttributeContext.Auth
@@ -31,6 +33,7 @@ import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.UUID
 import javax.inject.Inject
 
 class RepositoryImpl @Inject constructor(
@@ -335,6 +338,82 @@ class RepositoryImpl @Inject constructor(
         }
 
         awaitClose { close() }
+    }
+
+    override fun createCommunity(
+        name: String,
+        description: String
+    ): Flow<ResultState<CommunityModel>> = callbackFlow {
+        try {
+            trySend(ResultState.Loading)
+            val user = firebaseAuth.currentUser
+            if(user == null) {
+                trySend(ResultState.Error("You are not Authenticated"))
+                return@callbackFlow
+            }
+            val community = CommunityModel(id = UUID.randomUUID().toString(), name = name, description = description, createdBy = user.uid)
+
+            firestore.collection("communities")
+                .document(community.id).set(community)
+                .addOnSuccessListener {
+                    trySend(ResultState.Success(community))
+                }
+                .addOnFailureListener {
+                    Log.e("FirestoreError", "Error creating community: ${it.message}")
+                    trySend(ResultState.Error("${it.message}"))
+                }
+        } catch (e: Exception) {
+            trySend(ResultState.Error(e.message.toString()))
+            Log.e(TAG+"FirestoreError", "Error creating community: ${e.message}")
+        }
+
+        awaitClose { close() }
+    }
+
+    override fun getCommunities(): Flow<ResultState<List<CommunityModel>>> = callbackFlow {
+        try {
+            trySend(ResultState.Loading)
+            val communities = firestore.collection("communities")
+                .get()
+                .await()
+                .toObjects(CommunityModel::class.java)
+
+            trySend(ResultState.Success(communities))
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting communities: ${e.message}")
+            trySend(ResultState.Error("Error getting communities: ${e.message}"))
+        }
+
+        awaitClose { close() }
+    }
+
+    override fun deleteCommunity(communityId: String): Flow<ResultState<CommunityModel>> = callbackFlow{
+        try{
+            FirebaseDatabase.getInstance()
+                .getReference("discussions")
+                .child(communityId)
+                .removeValue()
+                .await()
+
+            firestore.collection("communities")
+                .document(communityId)
+                .delete()
+                .addOnSuccessListener {
+                    trySend(ResultState.Success(CommunityModel()))
+                }
+                .addOnFailureListener {
+                    Log.d(TAG, "Error deleting community: ${it.message}")
+                    trySend(ResultState.Error("Error deleting community: ${it.message}"))
+                }
+        }
+        catch (e: Exception) {
+            Log.d(TAG, "Error deleting community: ${e.message}")
+            trySend(ResultState.Error(e.message.toString()))
+        }
+
+        awaitClose { close() }
+
     }
 
     private fun deleteFromCloudinary(publicId: String) {

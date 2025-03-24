@@ -60,4 +60,18 @@ sealed class Routes(val route: String) {
     ) : Routes(
         route = DocumentDetails::class.qualifiedName.toString() + "/{route}?title={title}&description={description}&url={url}&category={category}&author={author}&uploadBy={uploadBy}&date={date}"
     )
+
+    @Serializable
+    object CreateCommunity: Routes(
+        route = CreateCommunity::class.qualifiedName.toString()
+    )
+
+    @Serializable
+    data class CommunityDetails(
+        val communityId: String = "",
+        val communityName: String = ""
+    ): Routes(
+        route = CommunityDetails::class.qualifiedName.toString() + "/{route}?communityId={communityId}&communityName={communityName}"
+    )
+
 }
