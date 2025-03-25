@@ -80,7 +80,7 @@ fun CommunityScreen(
     val communitiesState by communityViewModel.communities.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
     val createCommunityState by communityViewModel.createCommunityResult.collectAsState()
-    var communities by remember { mutableStateOf(emptyList<CommunityModel>()) }
+    var communities = emptyList<CommunityModel>()
     var loading by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
@@ -88,12 +88,8 @@ fun CommunityScreen(
 
     var showCreateCommunityModal by remember { mutableStateOf(false) }
 
-    var isFirstCall by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(Unit) {
-        if(isFirstCall) {
-            communityViewModel.getCommunities()
-            isFirstCall = false
-        }
+        communityViewModel.getCommunities()
     }
 
     LaunchedEffect(communitiesState) {
