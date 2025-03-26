@@ -19,7 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -61,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.assignmentwaala.unidatahub.common.AuthStatus
 import com.assignmentwaala.unidatahub.common.ResultState
+import com.assignmentwaala.unidatahub.presentation.components.DeleteAccountModal
 import com.assignmentwaala.unidatahub.presentation.components.PasswordResetModal
 import com.assignmentwaala.unidatahub.presentation.viewmodel.AuthViewModel
 import com.assignmentwaala.unidatahub.ui.theme.primaryBlue
@@ -84,6 +87,8 @@ fun ProfileScreen(
     var role by remember { mutableStateOf("") }
 
     var changePasswordDialog by remember { mutableStateOf(false) }
+    var deleteAccountDialog by remember { mutableStateOf(false) }
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -210,10 +215,23 @@ fun ProfileScreen(
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Logout", fontSize = 16.sp, color = Color.Red)
                         }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { deleteAccountDialog = true }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Account")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Delete Account", fontSize = 16.sp, color = Color.Red)
+                        }
+
                     }
                 }
 
@@ -226,6 +244,19 @@ fun ProfileScreen(
                         onPasswordReset = ::handlePasswordChange
                     )
                 }
+
+                if(deleteAccountDialog) {
+                    DeleteAccountModal(
+                        showDialog = deleteAccountDialog,
+                        onDismiss = {
+                            deleteAccountDialog = false
+                        },
+                        onAccountDelete = { password ->
+                            authViewModel.deleteAccount(password)
+                        }
+                    )
+                }
+
             }
 
         }

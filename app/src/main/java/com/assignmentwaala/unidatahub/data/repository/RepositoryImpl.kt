@@ -340,6 +340,41 @@ class RepositoryImpl @Inject constructor(
         awaitClose { close() }
     }
 
+    override fun deleteUser(password: String): Flow<AuthStatus<UserModel>> = callbackFlow{
+        try {
+            val currentUser = firebaseAuth.currentUser
+
+            if(currentUser != null) {
+                val credentials = EmailAuthProvider.getCredential(currentUser.email!!, password)
+                currentUser.reauthenticate(credentials)
+                    .addOnSuccessListener {
+                        currentUser.delete()
+                            .addOnSuccessListener {
+                                firestore.collection("users").document(currentUser.uid).delete()
+                                    .addOnSuccessListener {
+                                        trySend(AuthStatus.Unauthenticated)
+                                    }
+                                    .addOnFailureListener {
+                                        trySend(AuthStatus.Error(it.message.toString()))
+
+                                    }
+                                trySend(AuthStatus.Unauthenticated)
+                            }
+                            .addOnFailureListener {
+                                trySend(AuthStatus.Error(it.message.toString()))
+                            }
+                    }
+                    .addOnFailureListener {
+                        trySend(AuthStatus.Error(it.message.toString()))
+                    }
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, "Error: ${e.message}")
+            trySend(AuthStatus.Error("Error: ${e.message}"))
+        }
+        awaitClose { close() }
+    }
+
     override fun createCommunity(
         name: String,
         description: String

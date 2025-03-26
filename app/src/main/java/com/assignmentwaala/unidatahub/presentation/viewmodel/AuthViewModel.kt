@@ -95,4 +95,13 @@ class AuthViewModel @Inject constructor(private val repository: Repository): Vie
     fun changePassword(currentPassword: String, newPassword: String): Flow<ResultState<Boolean>> {
         return repository.changePassword(currentPassword, newPassword)
     }
+
+    fun deleteAccount(password: String) {
+        viewModelScope.launch {
+            repository.deleteUser(password).collect {
+                _authStatus.value = it
+                _isAuthenticated.value = it is AuthStatus.Authenticated
+            }
+        }
+    }
 }

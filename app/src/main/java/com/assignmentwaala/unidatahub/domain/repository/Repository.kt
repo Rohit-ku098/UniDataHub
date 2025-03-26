@@ -19,6 +19,7 @@ interface Repository {
     fun logout(): Flow<AuthStatus<UserModel>>
     fun getCurrentUser(): Flow<AuthStatus<UserModel>>
     fun changePassword(currentPassword: String, newPassword: String): Flow<ResultState<Boolean>>
+    fun deleteUser(password: String): Flow<AuthStatus<UserModel>>
 
     fun createCommunity(name: String, description: String): Flow<ResultState<CommunityModel>>
     fun getCommunities(): Flow<ResultState<List<CommunityModel>>>
