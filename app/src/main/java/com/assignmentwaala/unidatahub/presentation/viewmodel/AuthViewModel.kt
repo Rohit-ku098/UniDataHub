@@ -29,6 +29,9 @@ class AuthViewModel @Inject constructor(private val repository: Repository): Vie
     private val _currentUser = MutableStateFlow<UserModel?>(null)
     val currentUser = _currentUser.asStateFlow()
 
+    val deleteAccountState = MutableStateFlow<AuthStatus<UserModel>>(AuthStatus.Empty)
+
+
     init {
         Log.d(TAG, "AuthViewModel init called")
         Log.d(TAG, "authStatus:- ${authStatus.value}")
@@ -99,8 +102,12 @@ class AuthViewModel @Inject constructor(private val repository: Repository): Vie
     fun deleteAccount(password: String) {
         viewModelScope.launch {
             repository.deleteUser(password).collect {
-                _authStatus.value = it
-                _isAuthenticated.value = it is AuthStatus.Authenticated
+                deleteAccountState.value = it
+                if(it is AuthStatus.Unauthenticated) {
+                    _authStatus.value = it
+                    _isAuthenticated.value = it is AuthStatus.Authenticated
+                }
+
             }
         }
     }

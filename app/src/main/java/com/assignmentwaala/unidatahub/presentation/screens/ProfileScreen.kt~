@@ -88,7 +88,6 @@ fun ProfileScreen(
 
     var changePasswordDialog by remember { mutableStateOf(false) }
     var deleteAccountDialog by remember { mutableStateOf(false) }
-    val deleteAccountState by authViewModel.deleteAccountState.collectAsState()
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -103,18 +102,6 @@ fun ProfileScreen(
             else -> {
 
             }
-        }
-    }
-
-    LaunchedEffect(deleteAccountState) {
-        if (deleteAccountState is AuthStatus.Unauthenticated) {
-            Toast.makeText(context, "Account deleted successfully", Toast.LENGTH_SHORT).show()
-            authViewModel.deleteAccountState.value = AuthStatus.Empty
-        }
-
-        if(deleteAccountState is AuthStatus.Error) {
-            Toast.makeText(context, (deleteAccountState as AuthStatus.Error).message, Toast.LENGTH_SHORT).show()
-            authViewModel.deleteAccountState.value = AuthStatus.Empty
         }
     }
 
